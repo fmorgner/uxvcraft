@@ -1,0 +1,24 @@
+modLoader="klang"
+loaderVersion="[1,)"
+
+[[mods]]
+modId="uxvcraft"
+version="1.0.0"
+displayName="UxV Craft"
+description='''
+Unmanned vehicles for Minecraft!
+'''
+
+[[dependencies.uxvcraft]]
+    modId="forge"
+    mandatory=true
+    versionRange="[28,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.uxvcraft]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.14.4,)"
+    ordering="NONE"
+    side="BOTH"
