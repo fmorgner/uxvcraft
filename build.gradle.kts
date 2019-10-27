@@ -68,8 +68,6 @@ subprojects {
         )
     }
 
-    println(tasks.toList())
-
     val reobfArtifact = artifacts.add("default", file("$buildDir/reobfJar/output.jar")) {
         type = "jar"
         builtBy("reobfJar")
