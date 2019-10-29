@@ -1,6 +1,4 @@
 import net.minecraftforge.gradle.userdev.UserDevExtension
-import org.jetbrains.kotlin.gradle.dsl.Coroutines
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 buildscript {
@@ -42,21 +40,9 @@ subprojects {
         "minecraft"("net.minecraftforge:forge:$minecraftVersion-$forgeVersion")
     }
 
-    configure<KotlinJvmProjectExtension> {
-        experimental.coroutines = Coroutines.ENABLE
-    }
-
     configure<JavaPluginExtension> {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
-    }
-
-    tasks.withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "1.8"
-    }
-
-    tasks.named("build") {
-        dependsOn("reobfJar")
     }
 
     configure<UserDevExtension> {
@@ -68,15 +54,29 @@ subprojects {
         )
     }
 
-    val reobfArtifact = artifacts.add("default", file("$buildDir/reobfJar/output.jar")) {
-        type = "jar"
-        builtBy("reobfJar")
+    tasks {
+        withType<KotlinCompile> {
+            kotlinOptions.jvmTarget = "1.8"
+        }
+
+        named("build") {
+            dependsOn("reobfJar")
+        }
+    }
+
+    artifacts {
+        add("default", file("$buildDir/reobfJar/output.jar")) {
+            type = "jar"
+            builtBy("reobfJar")
+        }
     }
 
     configure<PublishingExtension> {
         publications {
             register("mavenJava", MavenPublication::class) {
-                artifact(reobfArtifact)
+                artifacts.all {
+                    artifact(this)
+                }
             }
         }
 

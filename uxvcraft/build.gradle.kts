@@ -1,21 +1,13 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 val modVersion: String by project
 
 version = modVersion
 
-configurations {
-    create("mod")
-}
-
 dependencies {
     compile(project(":klang"))
-    "mod"(project(":klang"))
 }
 
 tasks {
-
-    named<Jar>("jar") {
+    jar {
         manifest {
             attributes(
                 mapOf(
@@ -30,36 +22,18 @@ tasks {
         }
     }
 
-    named<ShadowJar>("shadowJar") {
-        archiveClassifier.set("")
-
-        dependencies {
-            include(project(":klang"))
-        }
-
-        configurations = listOf(project.configurations.compile.get())
-    }
-
     register<Jar>("deobfJar") {
         from(sourceSets["main"].output)
         archiveClassifier.set("dev")
     }
 
     register<Copy>("installMods") {
-        from(configurations["mod"])
+        dependsOn(":klang:shadowJar")
+        from(configurations.compile)
         include("klang*")
         into(project.file("run/mods").canonicalPath)
     }
 
-}
-
-reobf {
-    all {
-        input {
-            tasks.named<ShadowJar>("shadowJar").get().archiveFile.get().asFile
-        }
-        dependsOn("shadowJar")
-    }
 }
 
 minecraft {

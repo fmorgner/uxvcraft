@@ -1,4 +1,5 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import net.minecraftforge.gradle.userdev.tasks.RenameJarInPlace
 
 val minecraftVersion: String by project
 val kotlinVersion: String by project
@@ -15,7 +16,7 @@ dependencies {
 }
 
 tasks {
-    named<Jar>("jar") {
+    jar {
         manifest {
             attributes(
                 mapOf(
@@ -31,8 +32,12 @@ tasks {
         }
     }
 
-    named<ShadowJar>("shadowJar") {
+    shadowJar {
         archiveClassifier.set("")
+
+        configurations = listOf(
+            project.configurations.compile.get()
+        )
 
         dependencies {
             include(dependency("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"))
@@ -42,21 +47,18 @@ tasks {
             include(dependency("org.jetbrains.kotlinx:kotlinx-coroutines:$kotlinCoroutinesVersion"))
             include(dependency("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$kotlinCoroutinesVersion"))
         }
-
-        configurations = listOf(project.configurations.compile.get())
     }
 
     register<Jar>("deobfJar") {
+        dependsOn("shadowJar")
         from(sourceSets["main"].output)
         archiveClassifier.set("dev")
     }
-}
 
-reobf {
-    all {
-        input {
-            tasks.named<ShadowJar>("shadowJar").get().archiveFile.get().asFile
-        }
+    register<RenameJarInPlace>("reobfJar") {
         dependsOn("shadowJar")
+        input {
+            project.tasks.named<ShadowJar>("shadowJar").get().archiveFile.get().asFile
+        }
     }
 }
