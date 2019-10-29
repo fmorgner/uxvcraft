@@ -64,13 +64,6 @@ subprojects {
         }
     }
 
-    artifacts {
-        add("default", file("$buildDir/reobfJar/output.jar")) {
-            type = "jar"
-            builtBy("reobfJar")
-        }
-    }
-
     configure<PublishingExtension> {
         publications {
             register("mavenJava", MavenPublication::class) {

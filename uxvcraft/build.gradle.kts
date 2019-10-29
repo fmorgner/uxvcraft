@@ -1,3 +1,5 @@
+import net.minecraftforge.gradle.userdev.tasks.GenerateSRG
+
 val modVersion: String by project
 
 version = modVersion
@@ -71,6 +73,19 @@ minecraft {
             )
             source(sourceSets["main"])
         }
+    }
+}
+
+reobf {
+    maybeCreate("jar").run {
+        mappings = tasks.getByName<GenerateSRG>("createMcpToSrg").output
+    }
+}
+
+artifacts {
+    add("default", file("$buildDir/reobfJar/output.jar")) {
+        type = "jar"
+        builtBy("reobfJar")
     }
 }
 

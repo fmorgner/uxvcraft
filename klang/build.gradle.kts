@@ -1,4 +1,5 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import net.minecraftforge.gradle.userdev.tasks.GenerateSRG
 import net.minecraftforge.gradle.userdev.tasks.RenameJarInPlace
 
 val minecraftVersion: String by project
@@ -33,7 +34,7 @@ tasks {
     }
 
     shadowJar {
-        archiveClassifier.set("")
+        archiveClassifier.set("shadow")
 
         configurations = listOf(
             project.configurations.compile.get()
@@ -55,10 +56,17 @@ tasks {
         archiveClassifier.set("dev")
     }
 
-    register<RenameJarInPlace>("reobfJar") {
-        dependsOn("shadowJar")
-        input {
-            project.tasks.named<ShadowJar>("shadowJar").get().archiveFile.get().asFile
-        }
+}
+
+reobf {
+    maybeCreate("shadowJar").run {
+        mappings = tasks.getByName<GenerateSRG>("createMcpToSrg").output
+    }
+}
+
+artifacts {
+    add("default", file("$buildDir/reobfShadowJar/output.jar")) {
+        type = "jar"
+        builtBy("reobfShadowJar")
     }
 }
