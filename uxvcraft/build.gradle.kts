@@ -1,9 +1,7 @@
-import net.minecraftforge.gradle.userdev.tasks.GenerateSRG
-
-version = "${rootProject.extra["modVersion"]}"
+version = "${extra["modVersion"]}"
 
 dependencies {
-    implementation(project(":klang", "shadow"))
+    shadow(project(":klang"))
 }
 
 tasks {
@@ -23,12 +21,11 @@ tasks {
     }
 
     register<Copy>("installMods") {
-        dependsOn(":klang:shadowJar")
-        from(configurations.compile)
-        include("klang*")
-        into(project.file("run/mods").canonicalPath)
+        dependsOn(":klang:jar")
+        from(configurations.shadow)
+        include("klang*.jar")
+        into(file("run/mods").canonicalPath)
     }
-
 }
 
 minecraft {
@@ -68,17 +65,10 @@ minecraft {
     }
 }
 
-reobf {
-    maybeCreate("jar").mappings = tasks.createMcpToSrg.orNull?.output
-}
-
-artifacts {
-    add("default", file("$buildDir/reobfJar/output.jar")) {
-        type = "jar"
-        builtBy("reobfJar")
-    }
-}
-
 afterEvaluate {
-    project.tasks["prepareRuns"].dependsOn(project.tasks["installMods"])
+    tasks {
+        named("prepareRuns") {
+            dependsOn(named("installMods"))
+        }
+    }
 }

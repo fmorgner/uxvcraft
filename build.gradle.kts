@@ -1,18 +1,13 @@
+import Build_gradle.DeobfExtension
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import net.minecraftforge.gradle.userdev.UserDevExtension
+import net.minecraftforge.gradle.userdev.tasks.GenerateSRG
+import net.minecraftforge.gradle.userdev.tasks.RenameJarInPlace
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-buildscript {
-    extra.apply {
-        set("kotlinVersion", "1.3.50")
-        set("kotlinCoroutinesVersion", "1.3.2")
-        set("minecraftVersion", "1.14.4")
-        set("minecraftForgeVersion", "28.1.0")
-        set("minecraftMappingVersion", "20190719-1.14.3")
-        set("minecraftMappingChannel", "snapshot")
-        set("shadowVersion", "5.1.0")
-        set("modVersion", "1.0.0")
-    }
+typealias DeobfExtension = NamedDomainObjectContainer<RenameJarInPlace>
 
+buildscript {
     repositories {
         maven { url = uri("https://files.minecraftforge.net/maven") }
         jcenter()
@@ -20,8 +15,8 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.jetbrains.kotlin", "kotlin-gradle-plugin", "${project.extra["kotlinVersion"]}")
-        classpath("com.github.jengelman.gradle.plugins", "shadow", "${project.extra["shadowVersion"]}")
+        classpath("org.jetbrains.kotlin", "kotlin-gradle-plugin", "${extra["kotlinVersion"]}")
+        classpath("com.github.jengelman.gradle.plugins", "shadow", "${extra["shadowVersion"]}")
         classpath("net.minecraftforge.gradle", "ForgeGradle", "3.+") {
             isChanging = true
         }
@@ -34,44 +29,38 @@ subprojects {
     apply(plugin = "com.github.johnrengelman.shadow")
     apply(plugin = "net.minecraftforge.gradle")
     apply(plugin = "org.jetbrains.kotlin.jvm")
-    apply(plugin = "org.gradle.java")
     apply(plugin = "maven-publish")
 
     dependencies {
+        "compile"(kotlin("stdlib"))
+        "compile"(kotlin("stdlib-jdk8"))
+        "compile"(kotlin("reflect"))
         "testCompile"("junit:junit:4.12")
-        "minecraft"(group="net.minecraftforge", name="forge", version = "${rootProject.extra["minecraftVersion"]}-${rootProject.extra["minecraftForgeVersion"]}")
-    }
-
-    configure<JavaPluginExtension> {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        "minecraft"("net.minecraftforge:forge:${extra["minecraftVersion"]}-${extra["forgeVersion"]}")
     }
 
     configure<UserDevExtension> {
         mappings(
             mapOf(
-                "channel" to "${rootProject.extra["minecraftMappingChannel"]}",
-                "version" to "${rootProject.extra["minecraftMappingVersion"]}"
+                "channel" to "${extra["mappingChannel"]}",
+                "version" to "${extra["mappingVersion"]}"
             )
         )
     }
 
-    tasks {
-        withType<KotlinCompile> {
-            kotlinOptions.jvmTarget = "1.8"
-        }
-
-        named("build") {
-            dependsOn("reobfJar")
+    configure<DeobfExtension> {
+        maybeCreate("shadowJar").run {
+            mappings = tasks.getByName<GenerateSRG>("createMcpToSrg").output
         }
     }
 
     configure<PublishingExtension> {
         publications {
             register("mavenJava", MavenPublication::class) {
-                artifacts.all {
-                    artifact(this)
-                }
+                artifact(this@subprojects.artifacts.add("default", file("$buildDir/reobfShadowJar/output.jar")) {
+                    type = "jar"
+                    builtBy("reobfShadowJar")
+                })
             }
         }
 
@@ -79,6 +68,21 @@ subprojects {
             maven {
                 url = uri("file:///${rootProject.projectDir}/repo")
             }
+        }
+    }
+
+    tasks {
+        withType<KotlinCompile> {
+            kotlinOptions.jvmTarget = "1.8"
+        }
+
+        withType<ShadowJar> {
+            archiveClassifier.set("shadow")
+            configurations = emptyList()
+        }
+
+        named("build") {
+            dependsOn("reobfShadowJar")
         }
     }
 }
