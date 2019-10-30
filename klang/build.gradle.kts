@@ -1,19 +1,31 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import net.minecraftforge.gradle.userdev.tasks.GenerateSRG
-import net.minecraftforge.gradle.userdev.tasks.RenameJarInPlace
-
-val minecraftVersion: String by project
-val kotlinVersion: String by project
-val kotlinCoroutinesVersion: String by project
-
-version = "$minecraftVersion-$kotlinVersion"
+version = "${rootProject.extra["minecraftVersion"]}-${rootProject.extra["kotlinVersion"]}"
 
 dependencies {
-    compile("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
-    compile("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
-    compile("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
-    compile("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
-    compile("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$kotlinCoroutinesVersion")
+    compile(
+        group = "org.jetbrains.kotlin",
+        name = "kotlin-stdlib",
+        version = "${rootProject.extra["kotlinVersion"]}"
+    )
+    compile(
+        group = "org.jetbrains.kotlin",
+        name = "kotlin-stdlib-jdk8",
+        version = "${rootProject.extra["kotlinVersion"]}"
+    )
+    compile(
+        group = "org.jetbrains.kotlin",
+        name = "kotlin-reflect",
+        version = "${rootProject.extra["kotlinVersion"]}"
+    )
+    compile(
+        group = "org.jetbrains.kotlinx",
+        name = "kotlinx-coroutines-core",
+        version = "${rootProject.extra["kotlinCoroutinesVersion"]}"
+    )
+    compile(
+        group = "org.jetbrains.kotlinx",
+        name = "kotlinx-coroutines-jdk8",
+        version = "${rootProject.extra["kotlinCoroutinesVersion"]}"
+    )
 }
 
 tasks {
@@ -41,32 +53,27 @@ tasks {
         )
 
         dependencies {
-            include(dependency("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"))
-            include(dependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"))
-            include(dependency("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"))
-            include(dependency("org.jetbrains:annotations:13"))
-            include(dependency("org.jetbrains.kotlinx:kotlinx-coroutines:$kotlinCoroutinesVersion"))
-            include(dependency("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$kotlinCoroutinesVersion"))
+            include(dependency("org.jetbrains.kotlin:kotlin-stdlib"))
+            include(dependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8"))
+            include(dependency("org.jetbrains.kotlin:kotlin-reflect"))
+            include(dependency("org.jetbrains.kotlinx:kotlinx-coroutines"))
+            include(dependency("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8"))
         }
     }
-
-    register<Jar>("deobfJar") {
-        dependsOn("shadowJar")
-        from(sourceSets["main"].output)
-        archiveClassifier.set("dev")
-    }
-
 }
 
 reobf {
-    maybeCreate("shadowJar").run {
-        mappings = tasks.getByName<GenerateSRG>("createMcpToSrg").output
-    }
+    maybeCreate("shadowJar").mappings = tasks.createMcpToSrg.orNull?.output
 }
 
 artifacts {
     add("default", file("$buildDir/reobfShadowJar/output.jar")) {
         type = "jar"
         builtBy("reobfShadowJar")
+    }
+
+    add("shadow", tasks.shadowJar.get().archiveFile.get()) {
+        type = "jar"
+        builtBy(tasks.shadowJar)
     }
 }

@@ -2,8 +2,16 @@ import net.minecraftforge.gradle.userdev.UserDevExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 buildscript {
-    val shadowVersion: String by project
-    val kotlinVersion: String by project
+    extra.apply {
+        set("kotlinVersion", "1.3.50")
+        set("kotlinCoroutinesVersion", "1.3.2")
+        set("minecraftVersion", "1.14.4")
+        set("minecraftForgeVersion", "28.1.0")
+        set("minecraftMappingVersion", "20190719-1.14.3")
+        set("minecraftMappingChannel", "snapshot")
+        set("shadowVersion", "5.1.0")
+        set("modVersion", "1.0.0")
+    }
 
     repositories {
         maven { url = uri("https://files.minecraftforge.net/maven") }
@@ -12,8 +20,8 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.jetbrains.kotlin", "kotlin-gradle-plugin", kotlinVersion)
-        classpath("com.github.jengelman.gradle.plugins", "shadow", shadowVersion)
+        classpath("org.jetbrains.kotlin", "kotlin-gradle-plugin", "${project.extra["kotlinVersion"]}")
+        classpath("com.github.jengelman.gradle.plugins", "shadow", "${project.extra["shadowVersion"]}")
         classpath("net.minecraftforge.gradle", "ForgeGradle", "3.+") {
             isChanging = true
         }
@@ -21,11 +29,6 @@ buildscript {
 }
 
 subprojects {
-    val minecraftVersion: String by project
-    val mappingChannel: String by project
-    val mappingVersion: String by project
-    val forgeVersion: String by project
-
     group = "ch.felixmorgner"
 
     apply(plugin = "com.github.johnrengelman.shadow")
@@ -35,9 +38,8 @@ subprojects {
     apply(plugin = "maven-publish")
 
     dependencies {
-        "compile"(kotlin("stdlib"))
         "testCompile"("junit:junit:4.12")
-        "minecraft"("net.minecraftforge:forge:$minecraftVersion-$forgeVersion")
+        "minecraft"(group="net.minecraftforge", name="forge", version = "${rootProject.extra["minecraftVersion"]}-${rootProject.extra["minecraftForgeVersion"]}")
     }
 
     configure<JavaPluginExtension> {
@@ -48,8 +50,8 @@ subprojects {
     configure<UserDevExtension> {
         mappings(
             mapOf(
-                "channel" to mappingChannel,
-                "version" to mappingVersion
+                "channel" to "${rootProject.extra["minecraftMappingChannel"]}",
+                "version" to "${rootProject.extra["minecraftMappingVersion"]}"
             )
         )
     }

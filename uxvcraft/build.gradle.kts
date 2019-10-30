@@ -1,11 +1,9 @@
 import net.minecraftforge.gradle.userdev.tasks.GenerateSRG
 
-val modVersion: String by project
-
-version = modVersion
+version = "${rootProject.extra["modVersion"]}"
 
 dependencies {
-    compile(project(":klang"))
+    implementation(project(":klang", "shadow"))
 }
 
 tasks {
@@ -24,11 +22,6 @@ tasks {
         }
     }
 
-    register<Jar>("deobfJar") {
-        from(sourceSets["main"].output)
-        archiveClassifier.set("dev")
-    }
-
     register<Copy>("installMods") {
         dependsOn(":klang:shadowJar")
         from(configurations.compile)
@@ -39,7 +32,6 @@ tasks {
 }
 
 minecraft {
-
     runs {
         val configProperties = mapOf(
             "forge.logging.markers" to "CORE,SCAN,REGISTRIES",
@@ -77,9 +69,7 @@ minecraft {
 }
 
 reobf {
-    maybeCreate("jar").run {
-        mappings = tasks.getByName<GenerateSRG>("createMcpToSrg").output
-    }
+    maybeCreate("jar").mappings = tasks.createMcpToSrg.orNull?.output
 }
 
 artifacts {
